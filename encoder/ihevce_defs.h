@@ -469,7 +469,8 @@
 #define BELOW_REF_DEVIATION (0.0)
 #define ABOVE_REF_DEVIATION (220.0)
 
-#define MIN_QP_MOD_OFFSET -10
+#define MIN_BITRATE (1 << (6 + (VUI_BIT_RATE_SCALE)))
+#define MIN_QP_MOD_OFFSET (-10)
 #define MAX_QP_MOD_OFFSET 3
 #define TOT_QP_MOD_OFFSET (MAX_QP_MOD_OFFSET - MIN_QP_MOD_OFFSET + 1)
 
@@ -965,13 +966,6 @@ typedef enum
     NUM_REF_LISTS
 
 } REF_LISTS_t;
-
-typedef enum
-{
-    NULL_PLANE = -1,
-    U_PLANE = 0,
-    V_PLANE = 1
-} CHROMA_PLANE_ID_T;
 
 typedef enum SSD_TYPE_T
 {
