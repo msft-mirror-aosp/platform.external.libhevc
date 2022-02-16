@@ -15,24 +15,6 @@ license {
     ],
 }
 
-cc_library_headers {
-    name: "libhevcdec_headers",
-    export_include_dirs: [
-        "common",
-        "decoder",
-    ],
-    min_sdk_version: "29",
-}
-
-cc_library_headers {
-    name: "libhevcenc_headers",
-    export_include_dirs: [
-        "common",
-        "encoder",
-    ],
-    min_sdk_version: "29",
-}
-
 cc_library_static {
     name: "libhevcdec",
     vendor_available: true,
@@ -55,8 +37,8 @@ cc_library_static {
     ],
 
     export_include_dirs: [
-        "common",
         "decoder",
+        "common",
     ],
 
     srcs: [
@@ -457,8 +439,8 @@ cc_library_static {
     ],
 
     export_include_dirs: [
-        "common",
         "encoder",
+        "common",
     ],
 
     srcs: [
