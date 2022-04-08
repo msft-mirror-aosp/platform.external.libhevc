@@ -112,16 +112,7 @@
 /*****************************************************************************/
 /* Function Definitions                                                      */
 /*****************************************************************************/
-static inline WORD32 ihevce_is_nonzero(volatile UWORD8 *buf, WORD32 size)
-{
-    WORD32 i;
-    for (i = 0; i < size; i++)
-    {
-        if (buf[i])
-            return 1;
-    }
-    return 0;
-}
+
 /**
 *******************************************************************************
 *
@@ -152,6 +143,7 @@ void *ihevce_pre_enc_grp_get_next_job(
     multi_thrd_ctxt_t *ps_multi_thrd;
     job_queue_handle_t *ps_job_queue_hdl;
     void *pv_next = NULL;
+    UWORD8 au1_in_dep_cmp[MAX_IN_DEP] = { 0 };
     void *pv_job_q_mutex_hdl_pre_enc = NULL;
 
     /* Derive local variables */
@@ -190,7 +182,17 @@ void *ihevce_pre_enc_grp_get_next_job(
 
         if(1 == i4_blocking_mode)
         {
-            while(ihevce_is_nonzero(ps_job_queue->au1_in_dep, MAX_IN_DEP));
+            volatile WORD32 mem_diff;
+            volatile UWORD8 *pu1_ref_buf = &au1_in_dep_cmp[0];
+            volatile UWORD8 *pu1_curr_buf = &ps_job_queue->au1_in_dep[0];
+
+            mem_diff = memcmp((void *)pu1_ref_buf, (void *)pu1_curr_buf, MAX_IN_DEP);
+
+            /* wait until all dependency is resolved */
+            while(0 != mem_diff)
+            {
+                mem_diff = memcmp((void *)pu1_ref_buf, (void *)pu1_curr_buf, MAX_IN_DEP);
+            }
 
             /* update the next job in the queue */
             ps_job_queue_hdl->pv_next = ps_job_queue->pv_next;
@@ -198,7 +200,7 @@ void *ihevce_pre_enc_grp_get_next_job(
         else
         {
             /* check for input dependency resolved */
-            if(ihevce_is_nonzero(ps_job_queue->au1_in_dep, MAX_IN_DEP))
+            if((0 != memcmp(&au1_in_dep_cmp[0], &ps_job_queue->au1_in_dep[0], MAX_IN_DEP)))
             {
                 /* return null */
                 pv_next = NULL;
@@ -250,6 +252,7 @@ void *ihevce_enc_grp_get_next_job(
     job_queue_handle_t *ps_job_queue_hdl;
     void *pv_next = NULL;
     void *pv_job_q_mutex_hdl_enc_grp;
+    UWORD8 au1_in_dep_cmp[MAX_IN_DEP] = { 0 };
 
     /* Derive local variables */
     ps_multi_thrd = (multi_thrd_ctxt_t *)pv_multi_thrd_ctxt;
@@ -286,7 +289,17 @@ void *ihevce_enc_grp_get_next_job(
 
         if(1 == i4_blocking_mode)
         {
-            while(ihevce_is_nonzero(ps_job_queue->au1_in_dep, MAX_IN_DEP));
+            volatile WORD32 mem_diff;
+            volatile UWORD8 *pu1_ref_buf = &au1_in_dep_cmp[0];
+            volatile UWORD8 *pu1_curr_buf = &ps_job_queue->au1_in_dep[0];
+
+            mem_diff = memcmp((void *)pu1_ref_buf, (void *)pu1_curr_buf, MAX_IN_DEP);
+
+            /* wait until all dependency is resolved */
+            while(0 != mem_diff)
+            {
+                mem_diff = memcmp((void *)pu1_ref_buf, (void *)pu1_curr_buf, MAX_IN_DEP);
+            }
 
             /* update the next job in the queue */
             ps_job_queue_hdl->pv_next = ps_job_queue->pv_next;
@@ -294,7 +307,7 @@ void *ihevce_enc_grp_get_next_job(
         else
         {
             /* check for input dependency resolved */
-            if(ihevce_is_nonzero(ps_job_queue->au1_in_dep, MAX_IN_DEP))
+            if((0 != memcmp(&au1_in_dep_cmp[0], &ps_job_queue->au1_in_dep[0], MAX_IN_DEP)))
             {
                 /* return null */
                 pv_next = NULL;
