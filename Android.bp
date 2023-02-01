@@ -15,6 +15,24 @@ license {
     ],
 }
 
+cc_library_headers {
+    name: "libhevcdec_headers",
+    export_include_dirs: [
+        "common",
+        "decoder",
+    ],
+    min_sdk_version: "29",
+}
+
+cc_library_headers {
+    name: "libhevcenc_headers",
+    export_include_dirs: [
+        "common",
+        "encoder",
+    ],
+    min_sdk_version: "29",
+}
+
 cc_library_static {
     name: "libhevcdec",
     vendor_available: true,
@@ -37,8 +55,8 @@ cc_library_static {
     ],
 
     export_include_dirs: [
-        "decoder",
         "common",
+        "decoder",
     ],
 
     srcs: [
@@ -383,6 +401,16 @@ cc_library_static {
                 "common/x86/ihevc_tables_x86_intr.c",
             ],
         },
+        riscv64: {
+            local_include_dirs: [
+                "common/riscv64",
+            ],
+
+            srcs: [
+                "decoder/riscv64/ihevcd_function_selector.c",
+                "decoder/riscv64/ihevcd_function_selector_generic.c",
+            ],
+        },
     },
 
     sanitize: {
@@ -439,8 +467,8 @@ cc_library_static {
     ],
 
     export_include_dirs: [
-        "encoder",
         "common",
+        "encoder",
     ],
 
     srcs: [
@@ -768,6 +796,11 @@ cc_library_static {
             ],
         },
 
+        riscv64: {
+            local_include_dirs: [
+                "common/riscv64",
+            ],
+        },
     },
     sanitize: {
         integer_overflow: true,
