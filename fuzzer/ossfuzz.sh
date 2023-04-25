@@ -18,6 +18,12 @@ test "${SRC}" != "" || exit 1
 test "${WORK}" != "" || exit 1
 test "${OUT}" != "" || exit 1
 
+#Opt out of null and shift sanitizers in undefined sanitizer
+if [[ $SANITIZER = *undefined* ]]; then
+  CFLAGS="$CFLAGS -fno-sanitize=null,shift"
+  CXXFLAGS="$CXXFLAGS -fno-sanitize=null,shift"
+fi
+
 # Build libhevc
 build_dir=$WORK/build
 rm -rf ${build_dir}
@@ -25,8 +31,9 @@ mkdir -p ${build_dir}
 
 pushd ${build_dir}
 cmake ${SRC}/libhevc
-make -j$(nproc) hevc_dec_fuzzer
-cp ${build_dir}/hevc_dec_fuzzer $OUT/hevc_dec_fuzzer
+make -j$(nproc) hevc_dec_fuzzer hevc_enc_fuzzer
+cp ${build_dir}/hevc_dec_fuzzer $OUT/
+cp ${build_dir}/hevc_enc_fuzzer $OUT/
 popd
 
 cp $SRC/hevc_dec_fuzzer_seed_corpus.zip $OUT/hevc_dec_fuzzer_seed_corpus.zip
