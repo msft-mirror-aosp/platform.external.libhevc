@@ -6,11 +6,11 @@ third_party {
     type: GIT
     value: "https://github.com/ittiam-systems/libhevc.git"
   }
-  version: "a3cac8c9d79968772272fff97a98d4edaf3132c1"
+  version: "v1.1.1"
   license_type: NOTICE
   last_upgrade_date {
     year: 2023
-    month: 03
-    day: 04
+    month: 04
+    day: 24
   }
 }
