@@ -58,28 +58,19 @@
 #include "ihevcd_function_selector.h"
 #include "ihevcd_structs.h"
 
-void ihevcd_init_function_ptr_mips_generic(codec_t *ps_codec);
-void ihevcd_init_function_ptr_mips_32(codec_t *ps_codec);
-
 void ihevcd_init_function_ptr(void *pv_codec)
 {
     codec_t *ps_codec = (codec_t *)pv_codec;
     switch(ps_codec->e_processor_arch)
     {
-#if ENABLE_MIPS32_SIMD
-        case ARCH_MIPS_32:
-            ihevcd_init_function_ptr_mips_32(ps_codec);
-            break;
-#endif
-        case ARCH_MIPS_GENERIC:
         default:
-            ihevcd_init_function_ptr_mips_generic(ps_codec);
-            break;
+        case ARCH_RISCV64_GENERIC:
+            ihevcd_init_function_ptr_generic(pv_codec);
     }
 }
 
 void ihevcd_init_arch(void *pv_codec)
 {
     codec_t *ps_codec = (codec_t *)pv_codec;
-    ps_codec->e_processor_arch = ARCH_MIPS_32;
+    ps_codec->e_processor_arch = ARCH_RISCV64_GENERIC;
 }
