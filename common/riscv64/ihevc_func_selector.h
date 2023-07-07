@@ -89,7 +89,7 @@
 #define     SAO_EDGE_OFFSET_CLASS3_CHROMA           C
 
 #define     INTRA_PRED_LUMA_REF_SUBSTITUTION        C
-#define     INTRA_PRED_REF_FILTERING                 C
+#define     INTRA_PRED_REF_FILTERING                C
 #define     INTRA_PRED_LUMA_PLANAR                  C
 #define     INTRA_PRED_LUMA_DC                      C
 #define     INTRA_PRED_LUMA_HORZ                    C
@@ -152,21 +152,21 @@
 #define QUANT_32X32                                 C
 
 /* Chroma interleaved*/
-#define CHROMA_RESI_TRANS_QUANT_4X4                        C
-#define CHROMA_RESI_TRANS_QUANT_8X8                        C
-#define CHROMA_RESI_TRANS_QUANT_16X16                      C
+#define CHROMA_RESI_TRANS_QUANT_4X4                 C
+#define CHROMA_RESI_TRANS_QUANT_8X8                 C
+#define CHROMA_RESI_TRANS_QUANT_16X16               C
 
-#define CHROMA_RESI_QUANT_4X4                              C
-#define CHROMA_RESI_QUANT_8X8                              C
-#define CHROMA_RESI_QUANT_16X16                            C
+#define CHROMA_RESI_QUANT_4X4                       C
+#define CHROMA_RESI_QUANT_8X8                       C
+#define CHROMA_RESI_QUANT_16X16                     C
 
-#define CHROMA_RESI_TRANS_4X4                              C
-#define CHROMA_RESI_TRANS_8X8                              C
-#define CHROMA_RESI_TRANS_16X16                            C
+#define CHROMA_RESI_TRANS_4X4                       C
+#define CHROMA_RESI_TRANS_8X8                       C
+#define CHROMA_RESI_TRANS_16X16                     C
 
-#define CHROMA_RESI_4X4                                    C
-#define CHROMA_RESI_8X8                                    C
-#define CHROMA_RESI_16X16                                  C
+#define CHROMA_RESI_4X4                             C
+#define CHROMA_RESI_8X8                             C
+#define CHROMA_RESI_16X16                           C
 
 /* Inverse transform functions */
 /* Luma */
@@ -201,21 +201,21 @@
 #define ITRANS_32X32                                C
 
 /* Chroma interleaved */
-#define CHROMA_IQUANT_ITRANS_RECON_4X4                     C
-#define CHROMA_IQUANT_ITRANS_RECON_8X8                     C
-#define CHROMA_IQUANT_ITRANS_RECON_16X16                   C
+#define CHROMA_IQUANT_ITRANS_RECON_4X4              C
+#define CHROMA_IQUANT_ITRANS_RECON_8X8              C
+#define CHROMA_IQUANT_ITRANS_RECON_16X16            C
 
-#define CHROMA_IQUANT_RECON_4X4                            C
-#define CHROMA_IQUANT_RECON_8X8                            C
-#define CHROMA_IQUANT_RECON_16X16                          C
+#define CHROMA_IQUANT_RECON_4X4                     C
+#define CHROMA_IQUANT_RECON_8X8                     C
+#define CHROMA_IQUANT_RECON_16X16                   C
 
-#define CHROMA_ITRANS_RECON_4X4                            C
-#define CHROMA_ITRANS_RECON_8X8                            C
-#define CHROMA_ITRANS_RECON_16X16                          C
+#define CHROMA_ITRANS_RECON_4X4                     C
+#define CHROMA_ITRANS_RECON_8X8                     C
+#define CHROMA_ITRANS_RECON_16X16                   C
 
-#define CHROMA_RECON_4X4                                   C
-#define CHROMA_RECON_8X8                                   C
-#define CHROMA_RECON_16X16                                 C
+#define CHROMA_RECON_4X4                            C
+#define CHROMA_RECON_8X8                            C
+#define CHROMA_RECON_16X16                          C
 
 #define IHEVC_MEMCPY                                C
 #define IHEVC_MEMSET                                C
