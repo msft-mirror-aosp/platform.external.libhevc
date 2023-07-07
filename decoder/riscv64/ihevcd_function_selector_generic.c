@@ -18,10 +18,10 @@
 /**
 *******************************************************************************
 * @file
-*  ihevcd_function_selector_noneon.c
+*  ihevcd_function_selector.c
 *
 * @brief
-*  Contains functions to initialize noneon function pointers used in hevc
+*  Contains functions to initialize function pointers used in hevc
 *
 * @author
 *  Naveen
@@ -58,8 +58,10 @@
 #include "ihevcd_function_selector.h"
 #include "ihevcd_structs.h"
 
-void ihevcd_init_function_ptr_mips_generic(codec_t *ps_codec)
+void ihevcd_init_function_ptr_generic(void *pv_codec)
 {
+    codec_t *ps_codec = (codec_t *)pv_codec;
+
     ps_codec->s_func_selector.ihevc_deblk_chroma_horz_fptr                      =  &ihevc_deblk_chroma_horz;
     ps_codec->s_func_selector.ihevc_deblk_chroma_vert_fptr                      =  &ihevc_deblk_chroma_vert;
     ps_codec->s_func_selector.ihevc_deblk_luma_vert_fptr                        =  &ihevc_deblk_luma_vert;
