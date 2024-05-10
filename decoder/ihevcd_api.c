@@ -822,15 +822,11 @@ static IV_API_CALL_STATUS_T api_check_struct_sanity(iv_obj_t *ps_handle,
                         return IV_FAIL;
                     }
 
-#ifdef MULTICORE
                     if((ps_ip->u4_num_cores < 1) || (ps_ip->u4_num_cores > MAX_NUM_CORES))
-#else
-                    if(ps_ip->u4_num_cores != 1)
-#endif
-                        {
-                            ps_op->u4_error_code |= 1 << IVD_UNSUPPORTEDPARAM;
-                            return IV_FAIL;
-                        }
+                    {
+                        ps_op->u4_error_code |= 1 << IVD_UNSUPPORTEDPARAM;
+                        return IV_FAIL;
+                    }
                     break;
                 }
                 case IHEVCD_CXA_CMD_CTL_SET_PROCESSOR:
@@ -1216,6 +1212,7 @@ WORD32 ihevcd_allocate_static_bufs(iv_obj_t **pps_codec_obj,
     ps_codec->pf_aligned_alloc = pf_aligned_alloc;
     ps_codec->pf_aligned_free = pf_aligned_free;
     ps_codec->pv_mem_ctxt = pv_mem_ctxt;
+    ps_codec->i4_threads_active = ps_create_ip->u4_keep_threads_active;
 
     /* Request memory to hold thread handles for each processing thread */
     size = MAX_PROCESS_THREADS * ithread_get_handle_size();
@@ -1230,51 +1227,51 @@ WORD32 ihevcd_allocate_static_bufs(iv_obj_t **pps_codec_obj,
                         (UWORD8 *)pv_buf + (i * handle_size);
     }
 
-#ifdef KEEP_THREADS_ACTIVE
-    /* Request memory to hold mutex (start/done) for each processing thread */
-    size = 2 * MAX_PROCESS_THREADS * ithread_get_mutex_lock_size();
-    pv_buf = ps_codec->pf_aligned_alloc(pv_mem_ctxt, 128, size);
-    RETURN_IF((NULL == pv_buf), IV_FAIL);
-    memset(pv_buf, 0, size);
-
-    for(i = 0; i < MAX_PROCESS_THREADS; i++)
+    if(ps_codec->i4_threads_active)
     {
-        WORD32 ret;
-        WORD32 mutex_size = ithread_get_mutex_lock_size();
-        ps_codec->apv_proc_start_mutex[i] =
-                        (UWORD8 *)pv_buf + (2 * i * mutex_size);
-        ps_codec->apv_proc_done_mutex[i] =
-                        (UWORD8 *)pv_buf + ((2 * i + 1) * mutex_size);
+        /* Request memory to hold mutex (start/done) for each processing thread */
+        size = 2 * MAX_PROCESS_THREADS * ithread_get_mutex_lock_size();
+        pv_buf = ps_codec->pf_aligned_alloc(pv_mem_ctxt, 128, size);
+        RETURN_IF((NULL == pv_buf), IV_FAIL);
+        memset(pv_buf, 0, size);
 
-        ret = ithread_mutex_init(ps_codec->apv_proc_start_mutex[i]);
-        RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
+        for(i = 0; i < MAX_PROCESS_THREADS; i++)
+        {
+            WORD32 ret;
+            WORD32 mutex_size = ithread_get_mutex_lock_size();
+            ps_codec->apv_proc_start_mutex[i] =
+                            (UWORD8 *)pv_buf + (2 * i * mutex_size);
+            ps_codec->apv_proc_done_mutex[i] =
+                            (UWORD8 *)pv_buf + ((2 * i + 1) * mutex_size);
 
-        ret = ithread_mutex_init(ps_codec->apv_proc_done_mutex[i]);
-        RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
+            ret = ithread_mutex_init(ps_codec->apv_proc_start_mutex[i]);
+            RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
+
+            ret = ithread_mutex_init(ps_codec->apv_proc_done_mutex[i]);
+            RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
+        }
+
+        size = 2 * MAX_PROCESS_THREADS * ithread_get_cond_struct_size();
+        pv_buf = ps_codec->pf_aligned_alloc(pv_mem_ctxt, 128, size);
+        RETURN_IF((NULL == pv_buf), IV_FAIL);
+        memset(pv_buf, 0, size);
+
+        for(i = 0; i < MAX_PROCESS_THREADS; i++)
+        {
+            WORD32 ret;
+            WORD32 cond_size = ithread_get_cond_struct_size();
+            ps_codec->apv_proc_start_condition[i] =
+                            (UWORD8 *)pv_buf + (2 * i * cond_size);
+            ps_codec->apv_proc_done_condition[i] =
+                            (UWORD8 *)pv_buf + ((2 * i + 1) * cond_size);
+
+            ret = ithread_cond_init(ps_codec->apv_proc_start_condition[i]);
+            RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
+
+            ret = ithread_cond_init(ps_codec->apv_proc_done_condition[i]);
+            RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
+        }
     }
-
-    size = 2 * MAX_PROCESS_THREADS * ithread_get_cond_struct_size();
-    pv_buf = ps_codec->pf_aligned_alloc(pv_mem_ctxt, 128, size);
-    RETURN_IF((NULL == pv_buf), IV_FAIL);
-    memset(pv_buf, 0, size);
-
-    for(i = 0; i < MAX_PROCESS_THREADS; i++)
-    {
-        WORD32 ret;
-        WORD32 cond_size = ithread_get_cond_struct_size();
-        ps_codec->apv_proc_start_condition[i] =
-                        (UWORD8 *)pv_buf + (2 * i * cond_size);
-        ps_codec->apv_proc_done_condition[i] =
-                        (UWORD8 *)pv_buf + ((2 * i + 1) * cond_size);
-
-        ret = ithread_cond_init(ps_codec->apv_proc_start_condition[i]);
-        RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
-
-        ret = ithread_cond_init(ps_codec->apv_proc_done_condition[i]);
-        RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
-    }
-
-#endif
 
     /* Request memory for static bitstream buffer which holds bitstream after emulation prevention */
     size = MIN_BITSBUF_SIZE;
@@ -1464,6 +1461,37 @@ WORD32 ihevcd_allocate_static_bufs(iv_obj_t **pps_codec_obj,
     return (status);
 }
 
+WORD32 ihevcd_join_threads(codec_t *ps_codec)
+{
+    if(ps_codec->i4_threads_active)
+    {
+        int i;
+        /* Wait for threads */
+        ps_codec->i4_break_threads = 1;
+
+        for(i = 0; i < MAX_PROCESS_THREADS; i++)
+        {
+            WORD32 ret;
+            if(ps_codec->ai4_process_thread_created[i])
+            {
+                ret = ithread_mutex_lock(ps_codec->apv_proc_start_mutex[i]);
+                RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
+
+                ps_codec->ai4_process_start[i] = 1;
+                ret = ithread_cond_signal(ps_codec->apv_proc_start_condition[i]);
+                RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
+
+                ret = ithread_mutex_unlock(ps_codec->apv_proc_start_mutex[i]);
+                RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
+
+                ithread_join(ps_codec->apv_process_thread_handle[i], NULL);
+
+                ps_codec->ai4_process_thread_created[i] = 0;
+            }
+        }
+    }
+    return IV_SUCCESS;
+}
 /**
 *******************************************************************************
 *
@@ -1494,43 +1522,29 @@ WORD32 ihevcd_free_static_bufs(iv_obj_t *ps_codec_obj)
     pf_aligned_free = ps_codec->pf_aligned_free;
     pv_mem_ctxt = ps_codec->pv_mem_ctxt;
 
-#ifdef KEEP_THREADS_ACTIVE
-    /* Wait for threads */
-    ps_codec->i4_break_threads = 1;
-    for(int i = 0; i < MAX_PROCESS_THREADS; i++)
+    if(ps_codec->i4_threads_active)
     {
-        WORD32 ret;
-        if(ps_codec->ai4_process_thread_created[i])
+        /* Wait for threads */
+        ihevcd_join_threads(ps_codec);
+
+        for(int i = 0; i < MAX_PROCESS_THREADS; i++)
         {
-            ret = ithread_mutex_lock(ps_codec->apv_proc_start_mutex[i]);
+            WORD32 ret;
+            ret = ithread_cond_destroy(ps_codec->apv_proc_start_condition[i]);
             RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
 
-            ps_codec->ai4_process_start[i] = 1;
-            ret = ithread_cond_signal(ps_codec->apv_proc_start_condition[i]);
+            ret = ithread_cond_destroy(ps_codec->apv_proc_done_condition[i]);
             RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
 
-            ret = ithread_mutex_unlock(ps_codec->apv_proc_start_mutex[i]);
+            ret = ithread_mutex_destroy(ps_codec->apv_proc_start_mutex[i]);
             RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
 
-            ithread_join(ps_codec->apv_process_thread_handle[i], NULL);
-
-            ps_codec->ai4_process_thread_created[i] = 0;
+            ret = ithread_mutex_destroy(ps_codec->apv_proc_done_mutex[i]);
+            RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
         }
-        ret = ithread_cond_destroy(ps_codec->apv_proc_start_condition[i]);
-        RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
-
-        ret = ithread_cond_destroy(ps_codec->apv_proc_done_condition[i]);
-        RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
-
-        ret = ithread_mutex_destroy(ps_codec->apv_proc_start_mutex[i]);
-        RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
-
-        ret = ithread_mutex_destroy(ps_codec->apv_proc_done_mutex[i]);
-        RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
+        ALIGNED_FREE(ps_codec, ps_codec->apv_proc_start_mutex[0]);
+        ALIGNED_FREE(ps_codec, ps_codec->apv_proc_start_condition[0]);
     }
-    ALIGNED_FREE(ps_codec, ps_codec->apv_proc_start_mutex[0]);
-    ALIGNED_FREE(ps_codec, ps_codec->apv_proc_start_condition[0]);
-#endif
 
     ALIGNED_FREE(ps_codec, ps_codec->apv_process_thread_handle[0]);
     ALIGNED_FREE(ps_codec, ps_codec->pu1_bitsbuf_static);
@@ -2453,6 +2467,7 @@ WORD32 ihevcd_set_flush_mode(iv_obj_t *ps_codec_obj,
     ivd_ctl_flush_op_t *ps_ctl_op = (ivd_ctl_flush_op_t *)pv_api_op;
     UNUSED(pv_api_ip);
     ps_codec = (codec_t *)(ps_codec_obj->pv_codec_handle);
+    ihevcd_join_threads(ps_codec);
 
     /* Signal flush frame control call */
     ps_codec->i4_flush_mode = 1;
@@ -2943,6 +2958,8 @@ WORD32 ihevcd_reset(iv_obj_t *ps_codec_obj, void *pv_api_ip, void *pv_api_op)
     if(ps_codec != NULL)
     {
         DEBUG("\nReset called \n");
+        ihevcd_join_threads(ps_codec);
+
         ihevcd_init(ps_codec);
     }
     else
@@ -3504,11 +3521,7 @@ WORD32 ihevcd_set_num_cores(iv_obj_t *ps_codec_obj,
     ps_ip = (ihevcd_cxa_ctl_set_num_cores_ip_t *)pv_api_ip;
     ps_op = (ihevcd_cxa_ctl_set_num_cores_op_t *)pv_api_op;
 
-#ifdef MULTICORE
     ps_codec->i4_num_cores = ps_ip->u4_num_cores;
-#else
-    ps_codec->i4_num_cores = 1;
-#endif
     ps_op->u4_error_code = 0;
     return IV_SUCCESS;
 }

@@ -559,20 +559,22 @@ WORD32 ihevcd_iquant_itrans_recon_ctb(process_ctxt_t *ps_proc)
     UWORD8 *pu1_pic_intra_flag;
     /*************************************************************************/
     /* Contanis scaling matrix offset in the following order in a 1D buffer  */
+    /* Entries that are listed as UNUSED are invalid combinations where      */
+    /* scaling matrix is not used. eg: 64x64 SKIP CU, 64x64 PCM CU           */
     /* Intra 4 x 4 Y, 4 x 4 U, 4 x 4 V                                       */
     /* Inter 4 x 4 Y, 4 x 4 U, 4 x 4 V                                       */
     /* Intra 8 x 8 Y, 8 x 8 U, 8 x 8 V                                       */
     /* Inter 8 x 8 Y, 8 x 8 U, 8 x 8 V                                       */
     /* Intra 16x16 Y, 16x16 U, 16x16 V                                       */
     /* Inter 16x16 Y, 16x16 U, 16x16 V                                       */
-    /* Intra 32x32 Y                                                         */
-    /* Inter 32x32 Y                                                         */
+    /* Intra 32x32 Y, UNUSED,  UNUSED                                        */
+    /* Inter 32x32 Y, UNUSED,  UNUSED                                        */
+    /* UNUSED,        UNUSED,  UNUSED                                        */
+    /* UNUSED,        UNUSED,  UNUSED                                        */
     /*************************************************************************/
-    /* Only first 20 entries are used. Array is extended to avoid out of bound
-       reads. Skip CUs (64x64) read this table, but don't really use the value */
     static const WORD32 scaling_mat_offset[] =
       { 0, 16, 32, 48, 64, 80, 96, 160, 224, 288, 352, 416, 480, 736, 992,
-        1248, 1504, 1760, 2016, 3040, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        1248, 1504, 1760, 2016, 0, 0, 3040, 0, 0, 0, 0, 0, 0, 0, 0};
 
     PROFILE_DISABLE_IQ_IT_RECON_INTRA_PRED();
 
@@ -806,10 +808,7 @@ WORD32 ihevcd_iquant_itrans_recon_ctb(process_ctxt_t *ps_proc)
 
                     /* Calculating scaling matrix offset */
                     offset = log2_y_trans_size_minus_2 * 6
-                                    + (!intra_flag)
-                                    * ((log2_y_trans_size_minus_2
-                                                    == 3) ? 1 : 3)
-                                    + c_idx;
+                                    + (!intra_flag) * 3 + c_idx;
                     pi2_dequant_matrix = pi2_scaling_mat
                                     + scaling_mat_offset[offset];
 
@@ -945,8 +944,11 @@ WORD32 ihevcd_iquant_itrans_recon_ctb(process_ctxt_t *ps_proc)
                 {
                     /* While (MAX_TU_SIZE * 2 * 2) + 1 is the actaul size needed,
                        au1_ref_sub_out size is kept as multiple of 8,
-                       so that SIMD functions can load 64 bits */
-                    UWORD8 au1_ref_sub_out[(MAX_TU_SIZE * 2 * 2) + 8] = {0};
+                       so that SIMD functions can load 64 bits. Also some SIMD
+                       modules read few bytes before the start of the array, so
+                       allocate 16 extra bytes at the start */
+                    UWORD8 au1_ref_sub_out[16 + (MAX_TU_SIZE * 2 * 2) + 8] = {0};
+                    UWORD8 *pu1_ref_sub_out = &au1_ref_sub_out[16];
                     UWORD8 *pu1_top_left, *pu1_top, *pu1_left;
                     WORD32 luma_pred_func_idx, chroma_pred_func_idx;
 
@@ -980,23 +982,23 @@ WORD32 ihevcd_iquant_itrans_recon_ctb(process_ctxt_t *ps_proc)
                         if(luma_nbr_flags == 0x1ffff)
                             ps_codec->s_func_selector.ihevc_intra_pred_luma_ref_subst_all_avlble_fptr(
                                             pu1_top_left,
-                                            pu1_top, pu1_left, pred_strd, trans_size, luma_nbr_flags, au1_ref_sub_out, 1);
+                                            pu1_top, pu1_left, pred_strd, trans_size, luma_nbr_flags, pu1_ref_sub_out, 1);
                         else
                             ps_codec->s_func_selector.ihevc_intra_pred_luma_ref_substitution_fptr(
                                             pu1_top_left,
-                                            pu1_top, pu1_left, pred_strd, trans_size, luma_nbr_flags, au1_ref_sub_out, 1);
+                                            pu1_top, pu1_left, pred_strd, trans_size, luma_nbr_flags, pu1_ref_sub_out, 1);
 
                         /* call reference filtering */
                         ps_codec->s_func_selector.ihevc_intra_pred_ref_filtering_fptr(
-                                        au1_ref_sub_out, trans_size,
-                                        au1_ref_sub_out,
+                                        pu1_ref_sub_out, trans_size,
+                                        pu1_ref_sub_out,
                                         u1_luma_pred_mode, ps_sps->i1_strong_intra_smoothing_enable_flag);
 
                         /* use the look up to get the function idx */
                         luma_pred_func_idx = g_i4_ip_funcs[u1_luma_pred_mode];
 
                         /* call the intra prediction function */
-                        ps_codec->apf_intra_pred_luma[luma_pred_func_idx](au1_ref_sub_out, 1, pu1_pred, pred_strd, trans_size, u1_luma_pred_mode);
+                        ps_codec->apf_intra_pred_luma[luma_pred_func_idx](pu1_ref_sub_out, 1, pu1_pred, pred_strd, trans_size, u1_luma_pred_mode);
                     }
                     else
                     {
@@ -1048,14 +1050,14 @@ WORD32 ihevcd_iquant_itrans_recon_ctb(process_ctxt_t *ps_proc)
                         /* call the chroma reference array substitution */
                         ps_codec->s_func_selector.ihevc_intra_pred_chroma_ref_substitution_fptr(
                                         pu1_top_left,
-                                        pu1_top, pu1_left, pic_strd, trans_size, chroma_nbr_flags, au1_ref_sub_out, 1);
+                                        pu1_top, pu1_left, pic_strd, trans_size, chroma_nbr_flags, pu1_ref_sub_out, 1);
 
                         /* use the look up to get the function idx */
                         chroma_pred_func_idx =
                                         g_i4_ip_funcs[u1_chroma_pred_mode];
 
                         /* call the intra prediction function */
-                        ps_codec->apf_intra_pred_chroma[chroma_pred_func_idx](au1_ref_sub_out, 1, pu1_pred_orig, pred_strd, trans_size, u1_chroma_pred_mode);
+                        ps_codec->apf_intra_pred_chroma[chroma_pred_func_idx](pu1_ref_sub_out, 1, pu1_pred_orig, pred_strd, trans_size, u1_chroma_pred_mode);
                     }
                 }
 
