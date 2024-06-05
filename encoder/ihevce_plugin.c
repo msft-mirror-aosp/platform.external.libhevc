@@ -590,7 +590,7 @@ IV_API_CALL_STATUS_T
 * \if Function name : ihevce_plugin_init \endif
 *
 * \brief
-*    Initialises the enocder context and threads
+*    Initialises the encoder context and threads
 *
 * \param[in] Static params pointer
 *
@@ -1501,7 +1501,7 @@ static IHEVCE_PLUGIN_STATUS_T
 * \if Function name : ihevce_close \endif
 *
 * \brief
-*    De-Initialises the enocder context and threads
+*    De-Initialises the encoder context and threads
 *
 * \param[in] Static params pointer
 *
