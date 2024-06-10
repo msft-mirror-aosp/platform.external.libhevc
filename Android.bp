@@ -44,6 +44,7 @@ cc_library_static {
 
         "-O3",
         "-DANDROID",
+        "-DDISABLE_SEI",
         "-Wall",
         "-Werror",
         // common/x86/ihevc_sao_ssse3_intr.c: implicit conversion from
@@ -445,6 +446,7 @@ cc_library_static {
     host_supported: true,
     cflags: [
         "-DENABLE_MAIN_REXT_PROFILE",
+        "-DDISABLE_SEI",
         "-fPIC",
         "-O3",
         "-Wall",
