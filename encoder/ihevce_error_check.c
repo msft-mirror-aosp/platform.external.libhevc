@@ -350,6 +350,7 @@ WORD32 ihevce_hle_validate_static_params(ihevce_static_cfg_params_t *ps_static_c
             PRINTF(ps_sys_api->pv_cb_handle, i4_res_id, i4_br_id, "IHEVCE : i4_interop_flags %d \n", ps_static_cfg_prms->s_out_strm_prms.i4_interop_flags);
             PRINTF(ps_sys_api->pv_cb_handle, i4_res_id, i4_br_id, "IHEVCE : i4_sps_at_cdr_enable %d \n", ps_static_cfg_prms->s_out_strm_prms.i4_sps_at_cdr_enable);
             PRINTF(ps_sys_api->pv_cb_handle, i4_res_id, i4_br_id, "IHEVCE : i4_vui_enable %d \n", ps_static_cfg_prms->s_out_strm_prms.i4_vui_enable);
+#ifndef DISABLE_SEI
             PRINTF(ps_sys_api->pv_cb_handle, i4_res_id, i4_br_id, "IHEVCE : i4_sei_enable_flag %d \n", ps_static_cfg_prms->s_out_strm_prms.i4_sei_enable_flag);
             PRINTF(ps_sys_api->pv_cb_handle, i4_res_id, i4_br_id, "IHEVCE : i4_sei_payload_enable_flag %d \n", ps_static_cfg_prms->s_out_strm_prms.i4_sei_payload_enable_flag);
             PRINTF(ps_sys_api->pv_cb_handle, i4_res_id, i4_br_id, "IHEVCE : i4_sei_buffer_period_flags %d \n", ps_static_cfg_prms->s_out_strm_prms.i4_sei_buffer_period_flags);
@@ -368,6 +369,7 @@ WORD32 ihevce_hle_validate_static_params(ihevce_static_cfg_params_t *ps_static_c
             PRINTF(ps_sys_api->pv_cb_handle, i4_res_id, i4_br_id, "IHEVCE : u4_max_display_mastering_luminance %d \n", ps_static_cfg_prms->s_out_strm_prms.u4_max_display_mastering_luminance);
             PRINTF(ps_sys_api->pv_cb_handle, i4_res_id, i4_br_id, "IHEVCE : u4_min_display_mastering_luminance %d \n", ps_static_cfg_prms->s_out_strm_prms.u4_min_display_mastering_luminance);
             PRINTF(ps_sys_api->pv_cb_handle, i4_res_id, i4_br_id, "IHEVCE : i4_sei_hash_flags %d \n", ps_static_cfg_prms->s_out_strm_prms.i4_decoded_pic_hash_sei_flag);
+#endif
 
             PRINTF(ps_sys_api->pv_cb_handle, i4_res_id, i4_br_id, "\nIHEVCE : ps_static_cfg_prms->s_app_tile_params\n");
             PRINTF(ps_sys_api->pv_cb_handle, i4_res_id, i4_br_id, "IHEVCE : i4_tiles_enabled_flag %d \n", ps_static_cfg_prms->s_app_tile_params.i4_tiles_enabled_flag);
@@ -644,6 +646,7 @@ WORD32 ihevce_hle_validate_static_params(ihevce_static_cfg_params_t *ps_static_c
         return IHEVCE_SETUNSUPPORTEDINPUT(error_code);
     }
 
+#ifndef DISABLE_SEI
     if((ps_static_cfg_prms->s_out_strm_prms.i4_sei_enable_flag > 1) ||
        (ps_static_cfg_prms->s_out_strm_prms.i4_sei_enable_flag < 0))
     {
@@ -661,6 +664,7 @@ WORD32 ihevce_hle_validate_static_params(ihevce_static_cfg_params_t *ps_static_c
             pv_cb_handle, "IHEVCE ERROR: i4_sei_payload_enable_flag should be set to 1 or 0 \n");
         return IHEVCE_SETUNSUPPORTEDINPUT(error_code);
     }
+#endif
     if((ps_static_cfg_prms->s_multi_thrd_prms.i4_max_num_cores > MAX_NUM_CORES) ||
        (ps_static_cfg_prms->s_multi_thrd_prms.i4_max_num_cores < 1))
     {
@@ -1340,6 +1344,7 @@ WORD32 ihevce_hle_validate_static_params(ihevce_static_cfg_params_t *ps_static_c
         }
     }
 
+#ifndef DISABLE_SEI
     /* Check SEI related error checks */
     if(1 == ps_static_cfg_prms->s_out_strm_prms.i4_sei_enable_flag)
     {
@@ -1450,6 +1455,7 @@ WORD32 ihevce_hle_validate_static_params(ihevce_static_cfg_params_t *ps_static_c
             }
         }
     }
+#endif
 
     if(1 == ps_static_cfg_prms->s_out_strm_prms.i4_vui_enable)
     {
