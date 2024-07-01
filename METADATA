@@ -8,12 +8,12 @@ third_party {
   license_type: NOTICE
   last_upgrade_date {
     year: 2024
-    month: 4
-    day: 24
+    month: 6
+    day: 7
   }
   identifier {
     type: "Git"
     value: "https://github.com/ittiam-systems/libhevc.git"
-    version: "v1.4.0"
+    version: "v1.5.1"
   }
 }
