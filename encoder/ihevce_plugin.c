@@ -112,6 +112,8 @@
 *
 * \brief
 *    Memory manager specific alloc function
+*    it expects to reset the allocated memory and provide the zero initialised
+*    memory whenever this function getting called
 *
 * \param[in] pv_handle : handle to memory manager
 *                        (currently not required can be set to null)
@@ -158,6 +160,10 @@ void mem_mngr_alloc(void *pv_handle, ihevce_sys_api_t *ps_sys_api, iv_mem_rec_t 
             ps_sys_api->pv_cb_handle, "IHEVCE ERROR: Unable to allocate memory\n");
         ASSERT(0);
     }
+    else
+    {
+        memset(ps_memtab->pv_base, 0, ps_memtab->i4_mem_size);
+    }
     return;
 }
 
@@ -167,6 +173,8 @@ void mem_mngr_alloc(void *pv_handle, ihevce_sys_api_t *ps_sys_api, iv_mem_rec_t 
 *
 * \brief
 *    common memory allocate function should be used across all threads
+*    it expects to reset the allocated memory and return the zero initialised
+*    memory pointer whenever this function getting called
 *
 * \param[in] pv_handle : handle to memory manager
 *                        (currently not required can be set to null)
@@ -183,7 +191,12 @@ void mem_mngr_alloc(void *pv_handle, ihevce_sys_api_t *ps_sys_api, iv_mem_rec_t 
 void *memory_alloc(void *pv_handle, UWORD32 u4_size)
 {
     (void)pv_handle;
-    return (malloc(u4_size));
+    void *pv_buf = malloc(u4_size);
+    if(pv_buf)
+    {
+        memset(pv_buf, 0, u4_size);
+    }
+    return (pv_buf);
 }
 
 /*!
@@ -341,6 +354,7 @@ IHEVCE_PLUGIN_STATUS_T ihevce_set_def_params(ihevce_static_cfg_params_t *ps_para
     ps_params->s_out_strm_prms.i4_codec_profile = 1;
     ps_params->s_out_strm_prms.i4_codec_tier = 0;
     ps_params->s_out_strm_prms.i4_codec_type = 0;
+#ifndef DISABLE_SEI
     ps_params->s_out_strm_prms.i4_sei_buffer_period_flags = 0;
     ps_params->s_out_strm_prms.i4_sei_enable_flag = 0;
     ps_params->s_out_strm_prms.i4_sei_payload_enable_flag = 0;
@@ -351,6 +365,7 @@ IHEVCE_PLUGIN_STATUS_T ihevce_set_def_params(ihevce_static_cfg_params_t *ps_para
     ps_params->s_out_strm_prms.i4_sei_recovery_point_flags = 0;
     ps_params->s_out_strm_prms.i4_sei_mastering_disp_colour_vol_flags = 0;
     ps_params->s_out_strm_prms.i4_decoded_pic_hash_sei_flag = 0;
+#endif
     ps_params->s_out_strm_prms.i4_sps_at_cdr_enable = 1;
     ps_params->s_out_strm_prms.i4_vui_enable = 0;
     /*Set the interoperability flag to 0*/
@@ -629,7 +644,6 @@ IHEVCE_PLUGIN_STATUS_T ihevce_init(ihevce_static_cfg_params_t *ps_params, void *
             ps_sys_api->pv_cb_handle, "IHEVCE ERROR: Error in Plugin initialization\n");
         return (IHEVCE_EFAIL);
     }
-    memset(ps_ctxt, 0, sizeof(plugin_ctxt_t));
 
     /* initialise memory call backs */
     ps_ctxt->ihevce_mem_alloc = memory_alloc;
@@ -754,7 +768,6 @@ IHEVCE_PLUGIN_STATUS_T ihevce_init(ihevce_static_cfg_params_t *ps_params, void *
                 "IHEVCE ERROR: Error in Plugin HLE memory initialization\n");
             return (IHEVCE_EFAIL);
         }
-        memset(ps_interface_ctxt, 0, sizeof(ihevce_hle_ctxt_t));
         ps_interface_ctxt->i4_size = sizeof(ihevce_hle_ctxt_t);
 
         ps_ctxt->pv_hle_interface_ctxt = ps_interface_ctxt;

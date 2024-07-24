@@ -1844,6 +1844,21 @@ IHEVCD_ERROR_T ihevcd_parse_sps(codec_t *ps_codec)
                                           &ps_sps->s_vui_parameters,
                                           ps_sps->i1_sps_max_sub_layers - 1);
         RETURN_IF((ret != (IHEVCD_ERROR_T)IHEVCD_SUCCESS), ret);
+
+        if (0 != ps_codec->u4_allocate_dynamic_done) {
+
+            vui_t *ps_vui = &ps_sps->s_vui_parameters;
+            sps_t *ps_sps_old = ps_codec->s_parse.ps_sps;
+            vui_t *ps_vui_old = &ps_sps_old->s_vui_parameters;
+
+            if (ps_vui->u1_video_full_range_flag != ps_vui_old->u1_video_full_range_flag ||
+                ps_vui->u1_colour_primaries != ps_vui_old->u1_colour_primaries ||
+                ps_vui->u1_transfer_characteristics != ps_vui_old->u1_transfer_characteristics ||
+                ps_vui->u1_matrix_coefficients != ps_vui_old->u1_matrix_coefficients) {
+                ps_codec->i4_reset_flag = 1;
+                return (IHEVCD_ERROR_T)IVD_RES_CHANGED;
+            }
+        }
     }
 
     BITS_PARSE("sps_extension_flag", value, ps_bitstrm, 1);
@@ -1893,7 +1908,10 @@ IHEVCD_ERROR_T ihevcd_parse_sps(codec_t *ps_codec)
         return (IHEVCD_ERROR_T)IVD_RES_CHANGED;
     }
 
+    // Ensure both i2_pic_width_in_luma_samples and i2_pic_height_in_luma_samples do
+    // not exceed MAX_WD and their product doesn't exceed MAX_WD * MAX_HT
     if((ps_sps->i2_pic_width_in_luma_samples > MAX_WD) ||
+                    (ps_sps->i2_pic_height_in_luma_samples > MAX_WD) ||
                     ((ps_sps->i2_pic_width_in_luma_samples * ps_sps->i2_pic_height_in_luma_samples) >
                     (MAX_WD * MAX_HT)))
     {
@@ -2457,6 +2475,7 @@ void ihevcd_copy_pps(codec_t *ps_codec, WORD32 pps_id, WORD32 pps_id_ref)
 }
 
 
+#ifndef DISABLE_SEI
 IHEVCD_ERROR_T ihevcd_parse_buffering_period_sei(codec_t *ps_codec,
                                                  sps_t *ps_sps)
 {
@@ -3167,6 +3186,7 @@ IHEVCD_ERROR_T ihevcd_parse_sei(codec_t *ps_codec, nal_header_t *ps_nal)
 
     return ret;
 }
+#endif
 
 /**
 *******************************************************************************
