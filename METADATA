@@ -14,6 +14,7 @@ third_party {
   identifier {
     type: "Git"
     value: "https://github.com/ittiam-systems/libhevc.git"
-    version: "v1.6.0"
+    version: "8dd2b3392a24b2eed124e50531e79fee9ab48fd6"
+    closest_version: "v1.6.0"
   }
 }
