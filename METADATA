@@ -7,14 +7,14 @@ description: "Android fork of the libhevc library."
 third_party {
   license_type: NOTICE
   last_upgrade_date {
-    year: 2024
-    month: 8
-    day: 19
+    year: 2026
+    month: 1
+    day: 28
   }
   identifier {
     type: "Git"
     value: "https://github.com/ittiam-systems/libhevc.git"
-    version: "8dd2b3392a24b2eed124e50531e79fee9ab48fd6"
-    closest_version: "v1.6.0"
+    version: "25a7fafb00c7236c4ff2d6a1c2da8cc1e1af6688"
+    closest_version: "v1.7.0"
   }
 }
